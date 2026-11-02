@@ -113,7 +113,7 @@ export const ShareCardView = forwardRef<HTMLDivElement, Props>(({ persona, quest
         <span aria-hidden="true" style={{ fontFamily: "var(--font-display)", fontSize: 96, lineHeight: 0.5, color: style.accent, opacity: 0.45 }}>
           &ldquo;
         </span>
-        <p style={{ margin: 0, fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 500, fontSize: 30, lineHeight: 1.4, textAlign: "center" }}>
+        <p style={{ margin: 0, fontFamily: "var(--font-display)", fontStyle: "italic", fontWeight: 500, fontSize: 31, lineHeight: 1.4, textAlign: "center" }}>
           {answer}
         </p>
       </div>

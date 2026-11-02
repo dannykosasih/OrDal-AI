@@ -33,13 +33,13 @@ export function PilihPersona({ data, onPick, onHome }: Props) {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
         {PERSONA_ORDER.map((id) => (
           <PersonaCard key={id} persona={data.personas[id]} selected={selected === id} onPick={setSelected} />
         ))}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", marginTop: -20 }}>
         <button type="button" className="btn btn-ghost" onClick={pickRandom}>
           <span aria-hidden="true">🎲</span> Gue gak tau pilih siapa, pilihin aja
         </button>
@@ -71,7 +71,8 @@ export function PilihPersona({ data, onPick, onHome }: Props) {
       <footer style={{ textAlign: "center" }}>
         <p style={{ margin: "0 auto", maxWidth: 580, fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-faint)" }}>
           Ordal.ai.id adalah hiburan satir soal budaya kerja &amp; bisnis di Indonesia. Semua jawaban adalah komedi
-          sosial, bukan panduan nyata buat suap-menyuap atau jalur ilegal lain.
+          sosial, bukan panduan nyata buat suap-menyuap atau jalur ilegal lain. Butuh bantuan karier yang sungguhan?
+          Cari sumber yang kredibel ya.
         </p>
       </footer>
     </div>

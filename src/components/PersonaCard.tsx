@@ -37,7 +37,7 @@ export function PersonaCard({ persona, selected, onPick }: Props) {
       </div>
       <div style={{ padding: "22px 22px 26px", display: "flex", flexDirection: "column", gap: 10, flexGrow: 1 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-          <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 21, fontWeight: 700, color: "var(--ink)" }}>
+          <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
             {persona.name}
           </h3>
           <span
@@ -59,7 +59,25 @@ export function PersonaCard({ persona, selected, onPick }: Props) {
         <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.5, color: "var(--ink-soft)", fontStyle: "italic" }}>
           &ldquo;{persona.tagline}&rdquo;
         </p>
-        <button type="button" className="btn btn-primary" style={{ marginTop: 6, alignSelf: "flex-start" }} onClick={() => onPick(persona.id)}>
+        <button
+          type="button"
+          onClick={() => onPick(persona.id)}
+          style={{
+            marginTop: 6,
+            alignSelf: "flex-start",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: "var(--ink)",
+            color: "var(--cream)",
+            border: "none",
+            borderRadius: 999,
+            padding: "11px 18px",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
           Mulai Konsultasi <span aria-hidden="true">→</span>
         </button>
       </div>
