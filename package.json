@@ -1,0 +1,25 @@
+{
+  "name": "ordal-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ordal.ai.id — chatbot satir \"orang dalam\" dengan 6 persona bersuara beda-beda.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "html-to-image": "^1.11.11"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
