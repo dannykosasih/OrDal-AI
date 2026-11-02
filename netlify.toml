@@ -1,0 +1,22 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+# Keep the frontend's existing fetch("/api/chat") / fetch("/api/tts") calls working
+# unchanged — map them onto the actual Netlify Functions endpoints.
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
+  from = "/api/tts"
+  to = "/.netlify/functions/tts"
+  status = 200
+
+# Single-page app — everything else serves index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

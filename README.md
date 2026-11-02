@@ -25,7 +25,7 @@ Buka `http://localhost:5173`. Tanpa API key apa pun, semuanya tetap jalan penuh:
   dengan pitch/rate beda-beda per persona (lihat `src/data/personaStyles.ts`).
 
 Untuk ikut menjalankan 2 serverless function (`/api/chat`, `/api/tts`) secara lokal,
-pakai Vercel CLI: `vercel dev` (atau jalankan `npm run dev` dan terima kalau kedua
+pakai Netlify CLI: `netlify dev` (atau jalankan `npm run dev` dan terima kalau kedua
 endpoint itu 404 — frontend otomatis fallback, lihat bagian "AI fallback" & "Suara").
 
 ## Struktur
@@ -33,7 +33,7 @@ endpoint itu 404 — frontend otomatis fallback, lihat bagian "AI fallback" & "S
 ```
 src/
   pages/        Landing, PilihPersona, ChatRoom, HasilShare — 4 halaman di BRD
-  components/   PersonaCard, ChatBubble, MicButton, ShareCardView, dll
+  components/   PersonaCarousel, ChatBubble, MicButton, ShareCardView, dll
   lib/
     matching.ts   matcher scripted-response (keyword + token-similarity)
     chat.ts        orkestrasi: scripted dulu, baru fallback ke /api/chat
@@ -44,9 +44,11 @@ src/
 public/
   data/ordal-personas-scenarios.json   6 persona (system prompt, opener) + 8 skenario
   assets/card/, assets/avatar/          potret persona (jpg+webp, siap pakai)
-api/
-  chat.mjs   AI fallback (Anthropic Claude) — hanya kepanggil kalau scripted matcher nyerah
+netlify/functions/
+  chat.mjs   AI fallback (Google Gemini) — hanya kepanggil kalau scripted matcher nyerah
   tts.mjs    suara premium per persona (Google Cloud TTS) — opsional
+netlify.toml
+  build config + redirect /api/chat, /api/tts ke kedua function di atas
 ```
 
 ## Suara — kenapa tiap persona kedengeran beda
@@ -75,31 +77,43 @@ Tidak butuh API key, tidak butuh server.
 Scenario matcher (`src/lib/matching.ts`) jalan duluan untuk setiap pesan user —
 instan dan gratis karena datanya statis. Hanya kalau tidak ada skenario yang cocok
 (di bawah threshold di BRD: minimal 2 keyword match ATAU similarity > 0.6), frontend
-manggil `/api/chat`, yang menyuntikkan `system_prompt` persona yang aktif dan
-memanggil Claude (model default `claude-haiku-5-5`, lihat `.env.example`). Tanpa
-`ANTHROPIC_API_KEY`, endpoint ini balas 503 dan user dapat satu baris fallback yang
-masih in-character (`OFFLINE_FALLBACK` di `src/lib/chat.ts`), bukan error teknis.
+manggil `/api/chat` (lewat redirect `netlify.toml` ke `netlify/functions/chat.mjs`),
+yang menyuntikkan `system_prompt` persona yang aktif dan memanggil **Google Gemini**
+(model default `gemini-2.5-flash`, lihat `.env.example` — API key gratis di
+[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)). Tanpa
+`GEMINI_API_KEY`, endpoint ini balas 503 dan user dapat satu baris fallback yang
+masih in-character (`OFFLINE_FALLBACK` di `src/lib/chat.ts`), bukan error teknis —
+**ini juga yang kejadian kalau functionnya sendiri belum ke-deploy/ke-redirect
+dengan benar**, jadi kalau jawaban kerasa generik terus, cek dulu log function di
+Netilfy dashboard sebelum curiga ke model AI-nya.
 
-Mau ganti provider AI (OpenAI, Gemini, dll)? Tinggal edit `api/chat.mjs` — bentuk
-request/response ke frontend (`{ text }` atau `{ error }`) sudah provider-agnostic.
+Mau ganti provider AI lain (OpenAI, Claude, dll)? Tinggal edit
+`netlify/functions/chat.mjs` — bentuk request/response ke frontend (`{ text }` atau
+`{ error }`) sudah provider-agnostic.
 
 ## Deploy
 
-Dibuat buat Vercel (lihat `vercel.json`) — cocok sama domain `ordal.ai.id` yang
+Dibuat buat Netlify (lihat `netlify.toml`) — cocok sama domain `ordal.ai.id` yang
 sudah dimiliki:
 
 ```bash
-vercel          # preview
-vercel --prod   # production
+netlify deploy          # preview
+netlify deploy --prod   # production
 ```
 
-Set environment variables di dashboard Vercel (semuanya opsional, lihat
-`.env.example`): `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `GOOGLE_TTS_API_KEY`.
+Atau connect repo GitHub-nya langsung dari dashboard Netlify (Netlify otomatis baca
+`netlify.toml` untuk build command, publish dir, dan function dir).
+
+Set environment variables di **Site configuration → Environment variables** di
+dashboard Netlify (semuanya opsional, lihat `.env.example`): `GEMINI_API_KEY`,
+`GEMINI_MODEL`, `GOOGLE_TTS_API_KEY`. Setelah nambah/ubah env var, trigger deploy
+ulang (env var baru gak kepakai ke deploy yang udah jalan).
 
 ## Guardrail yang wajib dijaga
 
 Setiap `system_prompt` persona di `ordal-personas-scenarios.json` sudah membawa
 aturan wajib (bahasa santai maks 3-4 kalimat, larangan keluar karakter, larangan
 instruksi teknis suap/ilegal, redirect kalau user curhat masalah serius di luar
-konteks bisnis). **Jangan disederhanakan** saat prompt ini disuntik ke `api/chat.mjs`
-— lihat `safety_notes` di file JSON-nya untuk detail lengkap.
+konteks bisnis). **Jangan disederhanakan** saat prompt ini disuntik ke
+`netlify/functions/chat.mjs` — lihat `safety_notes` di file JSON-nya untuk detail
+lengkap.
