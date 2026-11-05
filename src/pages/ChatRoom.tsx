@@ -74,7 +74,9 @@ export function ChatRoom({ data, personaId, onFinish, onBack }: Props) {
       ]);
       setQuickReplies([]);
     } else {
-      setQuickReplies(outcome.followUps.length ? outcome.followUps : []);
+      // Every reply now comes straight from the AI, so these aren't "follow-ups" tied to
+      // a matched scenario any more — just standing topic ideas in case the user wants one.
+      setQuickReplies(data.scenarios.map((s) => s.quick_reply_label));
     }
   }
 

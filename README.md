@@ -17,16 +17,14 @@ npm install
 npm run dev
 ```
 
-Buka `http://localhost:5173`. Tanpa API key apa pun, semuanya tetap jalan penuh:
-
-- Chat pakai respons **scripted** dari `public/data/ordal-personas-scenarios.json`
-  (8 skenario x 6 persona), di-match lewat `src/lib/matching.ts`.
-- Suara tiap persona pakai **Web Speech API bawaan browser** — gratis, tanpa setup,
-  dengan pitch/rate beda-beda per persona (lihat `src/data/personaStyles.ts`).
+Buka `http://localhost:5173`. Suara tiap persona pakai **Web Speech API bawaan
+browser** tanpa setup apa pun (gratis, pitch/rate beda-beda per persona — lihat
+`src/data/personaStyles.ts`), tapi chat butuh `GEMINI_API_KEY` (lihat bagian
+"AI fallback" di bawah) buat jawab beneran — tanpa itu user cuma dapet satu baris
+fallback generik untuk semua pesan.
 
 Untuk ikut menjalankan 2 serverless function (`/api/chat`, `/api/tts`) secara lokal,
-pakai Netlify CLI: `netlify dev` (atau jalankan `npm run dev` dan terima kalau kedua
-endpoint itu 404 — frontend otomatis fallback, lihat bagian "AI fallback" & "Suara").
+pakai Netlify CLI: `netlify dev`.
 
 ## Struktur
 
@@ -35,17 +33,17 @@ src/
   pages/        Landing, PilihPersona, ChatRoom, HasilShare — 4 halaman di BRD
   components/   PersonaCarousel, ChatBubble, MicButton, ShareCardView, dll
   lib/
-    matching.ts   matcher scripted-response (keyword + token-similarity)
-    chat.ts        orkestrasi: scripted dulu, baru fallback ke /api/chat
+    chat.ts        setiap giliran chat manggil /api/chat langsung
     voice.ts        "Jarvis" layer — TTS per persona + voice input (STT)
   data/
     personaStyles.ts   warna + identitas suara tiap persona (tint, pitch/rate, voice Google)
     useOrdalData.ts     loader untuk ordal-personas-scenarios.json
 public/
-  data/ordal-personas-scenarios.json   6 persona (system prompt, opener) + 8 skenario
+  data/ordal-personas-scenarios.json   6 persona (system prompt, opener) + 8 topik
+                                         ide (dipakai sebagai quick-reply chip saja)
   assets/card/, assets/avatar/          potret persona (jpg+webp, siap pakai)
 netlify/functions/
-  chat.mjs   AI fallback (Google Gemini) — hanya kepanggil kalau scripted matcher nyerah
+  chat.mjs   setiap pesan chat lewat sini → Google Gemini, in-character per persona
   tts.mjs    suara premium per persona (Google Cloud TTS) — opsional
 netlify.toml
   build config + redirect /api/chat, /api/tts ke kedua function di atas
@@ -74,18 +72,24 @@ Tidak butuh API key, tidak butuh server.
 
 ## AI fallback
 
-Scenario matcher (`src/lib/matching.ts`) jalan duluan untuk setiap pesan user —
-instan dan gratis karena datanya statis. Hanya kalau tidak ada skenario yang cocok
-(di bawah threshold di BRD: minimal 2 keyword match ATAU similarity > 0.6), frontend
-manggil `/api/chat` (lewat redirect `netlify.toml` ke `netlify/functions/chat.mjs`),
-yang menyuntikkan `system_prompt` persona yang aktif dan memanggil **Google Gemini**
-(model default `gemini-2.5-flash`, lihat `.env.example` — API key gratis di
-[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)). Tanpa
-`GEMINI_API_KEY`, endpoint ini balas 503 dan user dapat satu baris fallback yang
-masih in-character (`OFFLINE_FALLBACK` di `src/lib/chat.ts`), bukan error teknis —
-**ini juga yang kejadian kalau functionnya sendiri belum ke-deploy/ke-redirect
-dengan benar**, jadi kalau jawaban kerasa generik terus, cek dulu log function di
-Netilfy dashboard sebelum curiga ke model AI-nya.
+Setiap pesan user — bebas, apa aja, gak dibatasi topik — langsung dikirim ke
+`/api/chat` (lewat redirect `netlify.toml` ke `netlify/functions/chat.mjs`), yang
+menyuntikkan `system_prompt` persona yang lagi aktif (karakter + guardrail-nya) dan
+memanggil **Google Gemini** (model default `gemini-2.5-flash`, dengan satu kali
+retry otomatis ke alias `gemini-flash-latest` kalau model utamanya gagal — lihat
+`.env.example` buat ganti modelnya. API key gratis di
+[aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)). 8 topik
+di `ordal-personas-scenarios.json` sekarang cuma dipakai sebagai ide/quick-reply
+chip di Chat Room — jawabannya sendiri selalu digenerate AI, bukan dicocokkan ke
+skrip.
+
+Tanpa `GEMINI_API_KEY`, atau kalau panggilan ke Gemini gagal, endpoint ini balas
+error dan user dapat satu baris fallback yang masih in-character
+(`OFFLINE_FALLBACK` di `src/lib/chat.ts`), bukan error teknis — tapi setiap
+kegagalan juga di-`console.error` baik di browser (buka DevTools) maupun di log
+function Netlify (**Site → Logs → Functions → chat**), jadi kalau jawaban kerasa
+generik terus padahal API key udah ke-set, cek dua log itu dulu buat liat pesan
+error asli dari Gemini-nya.
 
 Mau ganti provider AI lain (OpenAI, Claude, dll)? Tinggal edit
 `netlify/functions/chat.mjs` — bentuk request/response ke frontend (`{ text }` atau
