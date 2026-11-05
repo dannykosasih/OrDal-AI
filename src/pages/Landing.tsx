@@ -24,8 +24,9 @@ export function Landing({ data, onStart }: Props) {
             maxWidth: 820,
           }}
         >
-          3 Resep Sukses Berbisnis di Indonesia:{" "}
-          <em style={{ fontStyle: "italic", color: "var(--clay)" }}>Doa, Modal, Orang Dalam</em>
+          3 Resep Sukses Berbisnis di Indonesia:
+          <br />
+          <em style={{ fontStyle: "italic", color: "var(--clay)" }}>Doa, Modal, dan Orang Dalam</em>
         </h1>
         <p style={{ margin: 0, fontSize: 18, lineHeight: 1.6, color: "var(--ink-soft)", maxWidth: 580 }}>
           {data.meta.description.replace("Data persona dan skenario untuk chatbot satir Ordal.ai.id.", "").trim() ||
@@ -57,7 +58,7 @@ export function Landing({ data, onStart }: Props) {
       </div>
 
       <footer style={{ textAlign: "center" }}>
-        <p style={{ margin: "0 auto", maxWidth: 580, fontSize: 12.5, lineHeight: 1.6, color: "var(--ink-faint)" }}>
+        <p style={{ margin: "0 auto", maxWidth: 580, fontSize: 15, lineHeight: 1.6, color: "var(--ink-faint)" }}>
           Ordal.ai.id adalah hiburan satir soal budaya kerja &amp; bisnis di Indonesia. Semua jawaban adalah komedi
           sosial, bukan panduan nyata buat suap-menyuap atau jalur ilegal lain. Butuh bantuan karier yang sungguhan?
           Cari sumber yang kredibel ya.
