@@ -51,7 +51,7 @@ export default async (req) => {
   const systemPrompt = typeof payload.systemPrompt === "string" ? payload.systemPrompt.trim() : "";
   const message = typeof payload.message === "string" ? payload.message.trim() : "";
   const history = Array.isArray(payload.history) ? payload.history.slice(-8) : [];
-  const maxTokens = Number.isFinite(payload.maxTokens) ? Math.min(300, Math.max(40, payload.maxTokens)) : 120;
+  const maxTokens = Number.isFinite(payload.maxTokens) ? Math.min(600, Math.max(40, payload.maxTokens)) : 320;
 
   if (!systemPrompt || !message) {
     return json(400, { error: "Missing systemPrompt or message." });
