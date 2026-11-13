@@ -246,7 +246,7 @@
   "ai_fallback_config": {
     "trigger_condition": "similarity_score di bawah threshold untuk semua skenario",
     "model_suggestion": "pakai tier gratis/murah (cth. model kecil dari provider dengan free tier), suhu/temperature sedang (0.7-0.9) biar tetap kreatif tapi gak ngelantur",
-    "max_tokens_per_response": 320,
+    "max_tokens_per_response": 480,
     "note": "System prompt persona di atas WAJIB disuntikkan tiap kali manggil AI API, supaya karakter tetap konsisten walau pertanyaan di luar skrip"
   },
   "safety_notes": {

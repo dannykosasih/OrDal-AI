@@ -18,14 +18,28 @@ function json(status, body) {
   });
 }
 
+// Gemini 2.5 models think before answering, and that reasoning draws from the
+// *same* maxOutputTokens budget as the visible reply — so with thinking left on,
+// a modest token budget was mostly (or entirely) eaten by invisible reasoning,
+// leaving the actual reply short or cut off mid-sentence. Pinning thinkingBudget
+// to 0 gives the whole budget to the reply itself. Only 2.5-class model ids
+// support this field; older ids (if GEMINI_MODEL is overridden) would error on it.
+function supportsThinkingBudget(model) {
+  return /2\.5|latest/i.test(model);
+}
+
 async function callGemini(model, apiKey, systemPrompt, contents, maxTokens) {
+  const generationConfig = { temperature: 0.85, maxOutputTokens: maxTokens };
+  if (supportsThinkingBudget(model)) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
   return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents,
-      generationConfig: { temperature: 0.85, maxOutputTokens: maxTokens },
+      generationConfig,
     }),
   });
 }
@@ -51,7 +65,7 @@ export default async (req) => {
   const systemPrompt = typeof payload.systemPrompt === "string" ? payload.systemPrompt.trim() : "";
   const message = typeof payload.message === "string" ? payload.message.trim() : "";
   const history = Array.isArray(payload.history) ? payload.history.slice(-8) : [];
-  const maxTokens = Number.isFinite(payload.maxTokens) ? Math.min(600, Math.max(40, payload.maxTokens)) : 320;
+  const maxTokens = Number.isFinite(payload.maxTokens) ? Math.min(900, Math.max(40, payload.maxTokens)) : 480;
 
   if (!systemPrompt || !message) {
     return json(400, { error: "Missing systemPrompt or message." });
@@ -82,11 +96,28 @@ export default async (req) => {
       return json(502, { error: `AI provider error (${response.status}): ${errText.slice(0, 200)}` });
     }
 
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts
+    let data = await response.json();
+    let text = data?.candidates?.[0]?.content?.parts
       ?.map((p) => p.text ?? "")
       .join("")
       .trim();
+    let finishReason = data?.candidates?.[0]?.finishReason;
+
+    // Got cut off mid-answer (budget hit before the model wrapped up). Give it one
+    // more shot with a much bigger ceiling instead of shipping a truncated reply.
+    if (finishReason === "MAX_TOKENS" && maxTokens < 900) {
+      console.error(`Gemini reply hit MAX_TOKENS at budget ${maxTokens}, retrying with a bigger one.`);
+      const retryModel = response.url.includes(FALLBACK_MODEL) ? FALLBACK_MODEL : primaryModel;
+      const retryResponse = await callGemini(retryModel, apiKey, systemPrompt, contents, 900);
+      if (retryResponse.ok) {
+        data = await retryResponse.json();
+        text = data?.candidates?.[0]?.content?.parts
+          ?.map((p) => p.text ?? "")
+          .join("")
+          .trim();
+        finishReason = data?.candidates?.[0]?.finishReason;
+      }
+    }
 
     if (!text) {
       const blockReason = data?.promptFeedback?.blockReason;
@@ -94,6 +125,9 @@ export default async (req) => {
       return json(502, {
         error: blockReason ? `AI provider blocked the response (${blockReason}).` : "AI provider returned no text.",
       });
+    }
+    if (finishReason === "MAX_TOKENS") {
+      console.error("Gemini reply still truncated after retry — shipping it anyway rather than erroring.");
     }
     return json(200, { text });
   } catch (err) {
